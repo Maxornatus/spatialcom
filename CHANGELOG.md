@@ -5,6 +5,16 @@ Este proyecto sigue [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [No publicado]
 
+## [0.1.1] — 2026-08-20
+
+Sin cambios en el código. Zenodo solo acuña un DOI a partir de la primera release
+publicada **después** de conectar el repositorio, así que la 0.1.0 se quedó sin él;
+esta versión existe para obtenerlo y poder citar la librería en el manuscrito.
+
+### Cambiado
+
+- `CITATION.cff` y los metadatos del paquete pasan a 0.1.1.
+
 ## [0.1.0] — 2026-08-20
 
 Primera versión pública.
@@ -25,5 +35,6 @@ Primera versión pública.
   (`Config` + `Pipeline`).
 - 146 pruebas sobre datos sintéticos, sin dependencia de los datos del proyecto.
 
-[No publicado]: https://github.com/Maxornatus/spatialcom/compare/v0.1.0...HEAD
+[No publicado]: https://github.com/Maxornatus/spatialcom/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/Maxornatus/spatialcom/releases/tag/v0.1.1
 [0.1.0]: https://github.com/Maxornatus/spatialcom/releases/tag/v0.1.0

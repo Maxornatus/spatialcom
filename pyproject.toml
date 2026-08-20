@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "spatialcom"
-version = "0.1.0"
+version = "0.1.1"
 description = "Delineation, classification and characterization of spatial species assemblages from binary SDM rasters."
 readme = "README.md"
 requires-python = ">=3.10"
