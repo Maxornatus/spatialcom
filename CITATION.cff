@@ -21,5 +21,14 @@ keywords:
 version: 0.1.1
 date-released: "2026-08-20"
 license: MIT
+# DOI de concepto: resuelve siempre a la última versión publicada.
+doi: "10.5281/zenodo.22035894"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.22035894"
+    description: "DOI de concepto: todas las versiones."
+  - type: doi
+    value: "10.5281/zenodo.22035895"
+    description: "DOI de la versión 0.1.1."
 repository-code: "https://github.com/Maxornatus/spatialcom"
 url: "https://github.com/Maxornatus/spatialcom"

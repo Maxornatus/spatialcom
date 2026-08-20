@@ -4,6 +4,7 @@
 [![PyPI](https://img.shields.io/pypi/v/spatialcom.svg)](https://pypi.org/project/spatialcom/)
 [![Python](https://img.shields.io/pypi/pyversions/spatialcom.svg)](https://pypi.org/project/spatialcom/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22035894.svg)](https://doi.org/10.5281/zenodo.22035894)
 
 Delineación, clasificación y caracterización de **comunidades espaciales de especies** a
 partir de modelos de distribución (SDM) binarios sobre una cuadrícula regular.
@@ -289,6 +290,33 @@ que solo aparecieron al correr sobre los datos reales (ver `docs/VALIDACION.md`)
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — entorno de desarrollo y convenciones del código.
 - [`CHANGELOG.md`](CHANGELOG.md) — cambios por versión.
 - [`CITATION.cff`](CITATION.cff) — cómo citar la librería.
+
+---
+
+## Cómo citar
+
+Si usa `spatialcom` en un trabajo publicado, cite el software por su DOI:
+
+> Ortiz Varela, M. (2026). *spatialcom: spatial species assemblage delineation and
+> classification*. Zenodo. https://doi.org/10.5281/zenodo.22035894
+
+```bibtex
+@software{ortizvarela_spatialcom,
+  author    = {Ortiz Varela, Maximiliano},
+  title     = {spatialcom: spatial species assemblage delineation and classification},
+  year      = {2026},
+  publisher = {Zenodo},
+  doi       = {10.5281/zenodo.22035894},
+  url       = {https://github.com/Maxornatus/spatialcom}
+}
+```
+
+Ese es el **DOI de concepto**: resuelve siempre a la última versión. Para fijar la
+versión exacta usada en un análisis, tome el DOI propio de esa release desde
+[la página del registro en Zenodo](https://zenodo.org/records/22035895) — el de la 0.1.1
+es `10.5281/zenodo.22035895`.
+
+---
 
 La corrida `primates_v1` reproduce **exactamente** el resultado del notebook (447
 composiciones, 9.568 celdas, sin discrepancias de conteo) en 3 min 30 s, de los cuales la
