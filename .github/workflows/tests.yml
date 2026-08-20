@@ -51,6 +51,8 @@ jobs:
           cache: pip
       - run: pip install ruff mypy
       - run: ruff check .
+      # No bloquea todavía: quedan avisos de estrechamiento de Optional en
+      # pipeline.py, donde la comprobación real la hace PipelineState.require().
       - run: mypy src/spatialcom
         continue-on-error: true
 

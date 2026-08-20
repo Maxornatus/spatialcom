@@ -19,6 +19,7 @@ con dos cambios sustantivos:
 from __future__ import annotations
 
 import hashlib
+from collections.abc import Iterable
 from dataclasses import dataclass
 
 import geopandas as gpd
@@ -41,7 +42,7 @@ ID_PREFIX = "C"
 ID_LENGTH = 12
 
 
-def community_id(species) -> str:
+def community_id(species: Iterable[str]) -> str:
     """Identificador determinista y estable de una composición de especies.
 
     El mismo conjunto de especies produce siempre el mismo identificador, en
@@ -316,7 +317,7 @@ def delineate_communities(
     # --- catálogo de composiciones únicas ---
     seen: dict[str, tuple] = {}
     for cid, comp in zip(ids, compositions, strict=True):
-        if comp and cid not in seen:
+        if comp and cid is not None and cid not in seen:
             seen[cid] = comp
 
     occupancy = out_grid[id_column].value_counts()

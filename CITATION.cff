@@ -6,7 +6,6 @@ authors:
   - family-names: "Ortiz Varela"
     given-names: "Maximiliano"
     email: "max.sw2308@gmail.com"
-    orcid: ""
 abstract: >-
   Librería de Python para delinear, clasificar y caracterizar comunidades espaciales
   de especies a partir de modelos de distribución (SDM) binarios sobre una cuadrícula
