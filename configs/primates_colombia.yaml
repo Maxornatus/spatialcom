@@ -1,0 +1,67 @@
+# Configuración del análisis de comunidades de primates de Colombia.
+# Todas las rutas relativas se resuelven respecto a la ubicación de este archivo.
+run_id: primates_v1
+
+grid:
+  path: ../../cuadricula_cortada.shp
+  id_column: cell_id
+  crs: null            # null = usar el CRS de la cuadrícula como referencia
+
+species:
+  raster_dir: ../../tiff_primates_binarios
+  pattern: "*.tif"
+  name_strip_suffixes: ["_binario", "_bin", "_con"]
+  # 'any' reproduce el notebook original (1 píxel = presencia).
+  # 'min_pixels' o 'min_fraction' son más defendibles metodológicamente.
+  presence_rule: min_pixels
+  min_pixels: 1
+  min_fraction: 0.0
+  all_touched: false
+  thresholds: 0.5      # o un mapa especie -> umbral, ver docs/umbralizacion.md
+
+mask:
+  path: ../../uso_del_suelo_col/ciudades.shp
+  predicate: intersects
+  label: urbano
+
+deforestation:
+  raster: ../../capa_deforestacion/deforestacion_colombia.vrt
+  band: 1
+  year_offset: 2000
+  value_range: [1, 24]
+  all_touched: true
+  level_bins: [0.0, 10.0, 25.0, 45.0, 75.0]
+
+cluster:
+  metric: jaccard
+  linkage: average     # UPGMA. 'ward' es inválido sobre distancias de Jaccard.
+  selection: silhouette
+  n_clusters: null     # solo se usa con selection: fixed
+  k_range: [2, 12]
+  min_cells: 1
+  random_state: 42
+
+regions:
+  path: ../../Regiones_Naturales/regiones.shp
+  name_column: null    # null = autodetectar
+
+webmap:
+  enabled: true
+  filename: 07_mapa_comunidades
+  title: Comunidades de primates de Colombia
+  subtitle: ""
+  simplify_tolerance: 0.002   # grados; 0 conserva la geometría exacta
+  coord_precision: 4          # ~11 m en el ecuador
+  # none = cero peticiones de red; el contorno de regiones da la referencia
+  # geográfica. Cambie a carto u osm si prefiere fondo cartográfico con conexión.
+  basemap: none
+  leaflet: bundled            # bundled (offline) | cdn | ruta a una carpeta propia
+  context_path: null          # contorno de referencia; null = usar regions.path
+  embed_figures: true         # incrustar las figuras del paso 7 como pestaña
+
+output:
+  dir: ../../resultados
+  vector_format: gpkg  # gpkg evita el truncado de campos a 10 caracteres del SHP
+  figure_format: svg
+  dpi: 300
+  overwrite: true

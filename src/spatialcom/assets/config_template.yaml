@@ -1,0 +1,109 @@
+# Configuración de un análisis de comunidades espaciales.
+# Generada por `spatialcom init`. Las rutas relativas se resuelven respecto a
+# la ubicación de ESTE archivo.
+#
+# Guía completa de qué datos hacen falta y dónde obtenerlos: docs/DATOS.md
+# Comprobar los insumos antes de correr:  spatialcom check config.yaml
+
+run_id: corrida_1
+
+# ---------------------------------------------------------------------------
+# 1. CUADRÍCULA — la unidad espacial del análisis.
+#    Si no tiene una, genérela desde su área de estudio:
+#      spatialcom make-grid --boundary datos/limite/pais.shp \
+#                           --cell-size 0.1 --out datos/cuadricula.gpkg
+# ---------------------------------------------------------------------------
+grid:
+  path: datos/cuadricula.gpkg
+  id_column: cell_id
+  crs: null            # null = usar el CRS de la cuadrícula como referencia
+  layer: null          # nombre de capa, solo para GPKG con varias
+
+# ---------------------------------------------------------------------------
+# 2. ESPECIES — un ráster binario de presencia/ausencia por especie.
+#    Todos deben compartir CRS y resolución; las extensiones pueden diferir.
+#    Desde rásters continuos de idoneidad:
+#      spatialcom binarize --src datos/sdm_continuos --dst datos/sdm_binarios \
+#                          --thresholds-csv datos/umbrales.csv
+# ---------------------------------------------------------------------------
+species:
+  raster_dir: datos/sdm_binarios
+  pattern: "*.tif"
+  # Sufijos que se recortan del nombre de archivo para obtener el de la especie.
+  name_strip_suffixes: ["_binario", "_bin"]
+  # Criterio de presencia dentro de una celda:
+  #   any          un solo píxel basta
+  #   min_pixels   al menos `min_pixels` píxeles
+  #   min_fraction al menos esta fracción de la celda
+  #   majority     más de la mitad de la celda
+  presence_rule: min_pixels
+  min_pixels: 1
+  min_fraction: 0.0
+  all_touched: false
+  thresholds: 0.5      # o un mapa especie -> umbral para `binarize`
+
+# ---------------------------------------------------------------------------
+# 3. EXCLUSIÓN (opcional) — celdas que no deben contar como hábitat
+#    (zonas urbanas, cuerpos de agua, cultivos). Deje `path: null` para omitir.
+# ---------------------------------------------------------------------------
+mask:
+  path: null           # p.ej. datos/uso_suelo/urbano.shp
+  predicate: intersects
+  label: urbano
+
+# ---------------------------------------------------------------------------
+# 4. PERTURBACIÓN (opcional) — ráster categórico de pérdida de cobertura.
+#    Pensado para Hansen Global Forest Change `lossyear`: 0 = sin pérdida,
+#    1..N = año de pérdida contado desde `year_offset`.
+# ---------------------------------------------------------------------------
+deforestation:
+  raster: null         # p.ej. datos/cobertura/perdida.vrt
+  band: 1
+  year_offset: 2000
+  value_range: [1, 24]
+  all_touched: true
+  level_bins: [0.0, 10.0, 25.0, 45.0, 75.0]   # % de la celda
+
+# ---------------------------------------------------------------------------
+# 5. CLASIFICACIÓN de comunidades por composición.
+# ---------------------------------------------------------------------------
+cluster:
+  metric: jaccard
+  linkage: average     # UPGMA. 'ward' es inválido sobre distancias de Jaccard.
+  selection: silhouette
+  n_clusters: null     # solo se usa con selection: fixed
+  k_range: [2, 12]
+  min_cells: 1         # excluir composiciones muy raras del clustering
+  random_state: 42
+
+# ---------------------------------------------------------------------------
+# 6. REGIONES (opcional) — unidades biogeográficas para agregar los resultados.
+# ---------------------------------------------------------------------------
+regions:
+  path: null           # p.ej. datos/regiones/regiones.shp
+  name_column: null    # null = autodetectar una columna con "region"
+
+# ---------------------------------------------------------------------------
+# 7. MAPA WEB interactivo.
+# ---------------------------------------------------------------------------
+webmap:
+  enabled: true
+  filename: 07_mapa_comunidades
+  title: Comunidades de especies
+  subtitle: ""
+  simplify_tolerance: 0.002   # unidades del CRS; 0 conserva la geometría exacta
+  coord_precision: 4
+  basemap: none        # none = cero peticiones de red | carto | osm
+  leaflet: bundled     # bundled (offline) | cdn | ruta a una carpeta propia
+  context_path: null   # contorno de referencia; null = usar regions.path
+  embed_figures: true  # incrustar las figuras estáticas como tercera pestaña
+
+# ---------------------------------------------------------------------------
+# 8. SALIDAS.
+# ---------------------------------------------------------------------------
+output:
+  dir: resultados
+  vector_format: gpkg  # gpkg evita el truncado de campos del Shapefile
+  figure_format: svg
+  dpi: 300
+  overwrite: true

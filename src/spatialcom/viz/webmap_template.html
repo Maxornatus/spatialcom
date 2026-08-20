@@ -1,0 +1,1180 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__TITLE__</title>
+/*__LEAFLET_CSS__*/
+<style>
+  :root{
+    --bg:#ffffff; --panel:#f7f8fa; --border:#dfe3e8; --text:#1c2024;
+    --muted:#666e79; --accent:#0072B2; --shadow:0 1px 3px rgba(0,0,0,.12);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#15181c; --panel:#1d2126; --border:#2f353d; --text:#e6e9ed;
+           --muted:#98a1ac; --shadow:0 1px 3px rgba(0,0,0,.5); }
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{
+    font:13px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    color:var(--text); background:var(--bg);
+    display:flex; flex-direction:column;
+  }
+  header{
+    padding:10px 16px; border-bottom:1px solid var(--border);
+    display:flex; align-items:baseline; gap:12px; flex:0 0 auto;
+  }
+  header h1{font-size:15px;margin:0;font-weight:600}
+  header p{margin:0;color:var(--muted);font-size:12px}
+  #shell{flex:1 1 auto;display:flex;min-height:0}
+  #panel{
+    width:310px; flex:0 0 310px; background:var(--panel);
+    border-right:1px solid var(--border); overflow-y:auto; padding:12px;
+  }
+  #map{flex:1 1 auto;min-width:0;background:var(--panel)}
+  .block{margin-bottom:16px}
+  .block > label, .block > .label{
+    display:block; font-weight:600; font-size:11px; letter-spacing:.04em;
+    text-transform:uppercase; color:var(--muted); margin-bottom:6px;
+  }
+  select,input[type=search],input[type=number]{
+    width:100%; padding:6px 8px; border:1px solid var(--border); border-radius:5px;
+    background:var(--bg); color:var(--text); font:inherit;
+  }
+  .stats{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:6px;
+    background:var(--bg); border:1px solid var(--border);
+    border-radius:6px; padding:8px; margin-bottom:14px; text-align:center;
+  }
+  .stats b{display:block;font-size:17px;font-variant-numeric:tabular-nums}
+  .stats span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+  .checks{
+    max-height:210px; overflow-y:auto; border:1px solid var(--border);
+    border-radius:5px; background:var(--bg); padding:4px 6px; margin-top:6px;
+  }
+  .checks.short{max-height:none}
+  .checks label{
+    display:flex; align-items:center; gap:6px; padding:2px 0; cursor:pointer;
+    font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .checks label:hover{color:var(--accent)}
+  .checks input{margin:0;flex:0 0 auto}
+  .checks .count{margin-left:auto;color:var(--muted);font-size:11px;padding-left:8px}
+  .row{display:flex;gap:6px;align-items:center}
+  .row > *{flex:1}
+  .mode{display:flex;gap:10px;margin-top:6px;font-size:12px}
+  .mode label{display:flex;align-items:center;gap:4px;cursor:pointer}
+  button{
+    padding:6px 10px; border:1px solid var(--border); border-radius:5px;
+    background:var(--bg); color:var(--text); font:inherit; cursor:pointer;
+  }
+  button:hover{border-color:var(--accent);color:var(--accent)}
+  button.link{border:none;background:none;padding:0;color:var(--accent);font-size:11px}
+  .hint{color:var(--muted);font-size:11px;margin-top:4px}
+  .legend{
+    background:var(--bg); border:1px solid var(--border); border-radius:6px;
+    padding:8px 10px; box-shadow:var(--shadow); font-size:12px; line-height:1.5;
+  }
+  .legend .title{font-weight:600;margin-bottom:5px}
+  .legend .item{display:flex;align-items:center;gap:6px}
+  .legend i{width:14px;height:14px;border-radius:3px;display:inline-block;flex:0 0 auto}
+  .legend .ramp{display:flex;height:11px;border-radius:3px;overflow:hidden;margin:3px 0}
+  .legend .ramp span{flex:1}
+  .legend .ends{display:flex;justify-content:space-between;color:var(--muted);font-size:11px}
+  .leaflet-popup-content{margin:10px 12px;font:13px/1.45 system-ui,sans-serif;max-height:320px;overflow:auto}
+  .popup h3{margin:0 0 6px;font-size:13px}
+  .popup dl{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;margin:0 0 8px}
+  .popup dt{color:var(--muted)}
+  .popup dd{margin:0;font-variant-numeric:tabular-nums}
+  .popup ul{margin:0;padding-left:16px;columns:1}
+  .popup code{font-size:11px;color:var(--muted)}
+  /* pestañas */
+  .tabs{display:flex;gap:2px;margin-left:auto}
+  .tabs button{
+    border-radius:5px 5px 0 0; border-bottom-color:transparent;
+    padding:5px 14px; font-size:12px;
+  }
+  .tabs button[aria-selected=true]{
+    background:var(--panel); border-color:var(--border);
+    color:var(--accent); font-weight:600;
+  }
+  #charts{
+    flex:1 1 auto; min-width:0; overflow-y:auto; padding:16px;
+    background:var(--bg); display:none;
+  }
+  #charts.active{display:block}
+  #map.hidden{display:none}
+  #panel.inerte{opacity:.45;pointer-events:none}
+  .chart{
+    background:var(--panel); border:1px solid var(--border); border-radius:8px;
+    padding:14px 16px; margin-bottom:16px;
+  }
+  .chart header{
+    border:none; padding:0 0 8px; display:flex; align-items:baseline; gap:10px;
+  }
+  .chart h2{font-size:13px;margin:0;font-weight:600}
+  .chart .sub{font-size:11px;color:var(--muted);margin:0}
+  .chart .acciones{margin-left:auto;display:flex;gap:6px}
+  .chart svg{display:block;width:100%;height:auto;overflow:visible}
+  .chart .vacio{color:var(--muted);font-size:12px;padding:20px 0;text-align:center}
+  .bar-label{font-size:11px;fill:var(--text)}
+  .bar-value{font-size:11px;fill:var(--muted);font-variant-numeric:tabular-nums}
+  .bar-axis{stroke:var(--border);stroke-width:1}
+  .filtros-activos{
+    font-size:11px;color:var(--muted);background:var(--bg);border:1px solid var(--border);
+    border-radius:5px;padding:6px 8px;margin-bottom:12px;line-height:1.5;
+  }
+  #tabla{
+    flex:1 1 auto; min-width:0; display:none;
+    flex-direction:column; background:var(--bg); padding:16px; min-height:0;
+  }
+  #tabla.active{display:flex}
+  .tabla-barra{
+    display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+    margin-bottom:10px; flex:0 0 auto;
+  }
+  .tabla-barra input[type=search]{width:240px}
+  .tabla-barra input[type=number]{width:90px}
+  .tabla-barra .campo{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+  .tabla-barra .cuenta{margin-left:auto;font-size:12px;color:var(--muted)}
+  .tabla-caja{
+    flex:1 1 auto; min-height:0; overflow:auto;
+    border:1px solid var(--border); border-radius:6px; background:var(--bg);
+  }
+  table.comunidades{border-collapse:separate;border-spacing:0;width:100%;font-size:12px}
+  table.comunidades th{
+    position:sticky; top:0; z-index:1; background:var(--panel);
+    border-bottom:1px solid var(--border); padding:7px 10px; text-align:left;
+    font-weight:600; white-space:nowrap; cursor:pointer; user-select:none;
+  }
+  table.comunidades th:hover{color:var(--accent)}
+  table.comunidades th .orden{color:var(--accent);margin-left:3px}
+  table.comunidades td{
+    padding:6px 10px; border-bottom:1px solid var(--border); vertical-align:top;
+  }
+  table.comunidades tbody tr:hover{background:var(--panel)}
+  table.comunidades .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  table.comunidades .id{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;color:var(--muted)}
+  table.comunidades .sp{max-width:520px;line-height:1.5}
+  table.comunidades .sp button{
+    border:none;background:none;padding:0;margin-left:4px;
+    color:var(--accent);font-size:11px;cursor:pointer;
+  }
+  .chip{
+    display:inline-block; padding:1px 7px; border-radius:10px; font-size:11px;
+    background:var(--panel); border:1px solid var(--border); white-space:nowrap;
+  }
+  #figuras{
+    flex:1 1 auto; min-width:0; overflow-y:auto; padding:16px;
+    background:var(--bg); display:none;
+  }
+  #figuras.active{display:block}
+  .figura{
+    background:var(--panel); border:1px solid var(--border); border-radius:8px;
+    padding:14px 16px; margin-bottom:18px;
+  }
+  .figura h2{font-size:13px;margin:0 0 2px;font-weight:600}
+  .figura .pie{font-size:11px;color:var(--muted);margin:0 0 10px;line-height:1.5}
+  .figura .lienzo{
+    background:#ffffff; border:1px solid var(--border); border-radius:6px;
+    padding:8px; overflow-x:auto;
+  }
+  .figura img{display:block;max-width:100%;height:auto;margin:0 auto}
+  .figura .acciones{margin-top:8px;display:flex;gap:10px;align-items:center}
+  .aviso{
+    background:var(--panel); border:1px solid var(--border);
+    border-left:3px solid var(--accent); border-radius:5px;
+    padding:8px 12px; margin-bottom:16px; font-size:12px; color:var(--muted);
+    line-height:1.5;
+  }
+  #nodata{
+    position:absolute;inset:auto 0 50% 0;text-align:center;color:var(--muted);
+    pointer-events:none;display:none;font-size:14px;
+  }
+  @media (max-width:820px){
+    #shell{flex-direction:column}
+    #panel{width:auto;flex:0 0 auto;max-height:45vh;border-right:none;border-bottom:1px solid var(--border)}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>__TITLE__</h1>
+  <p>__SUBTITLE__</p>
+  <div class="tabs" role="tablist">
+    <button id="tab-mapa" role="tab" aria-selected="true">Mapa</button>
+    <button id="tab-graficas" role="tab" aria-selected="false">Gráficas</button>
+    <button id="tab-tabla" role="tab" aria-selected="false">Tabla</button>
+    <button id="tab-figuras" role="tab" aria-selected="false">Figuras</button>
+  </div>
+</header>
+
+<div id="shell">
+  <aside id="panel">
+    <div class="stats">
+      <div><b id="s-com">0</b><span>comunidades</span></div>
+      <div><b id="s-cel">0</b><span>celdas visibles</span></div>
+      <div><b id="s-esp">0</b><span>especies</span></div>
+    </div>
+
+    <div class="block">
+      <label for="colorby">Colorear por</label>
+      <select id="colorby"></select>
+    </div>
+
+    <div class="block">
+      <div class="label">Especies <button class="link" id="sp-clear">limpiar</button></div>
+      <input type="search" id="sp-search" placeholder="buscar especie…" autocomplete="off">
+      <div class="mode">
+        <label><input type="radio" name="spmode" value="any" checked> contiene alguna</label>
+        <label><input type="radio" name="spmode" value="all"> contiene todas</label>
+      </div>
+      <div class="checks" id="sp-list"></div>
+      <div class="hint" id="sp-hint">sin filtro: se muestran todas</div>
+    </div>
+
+    <div class="block" id="reg-block">
+      <div class="label">Región <button class="link" id="reg-all">todas</button></div>
+      <div class="checks short" id="reg-list"></div>
+    </div>
+
+    <div class="block" id="clu-block">
+      <div class="label">Cluster <button class="link" id="clu-all">todos</button></div>
+      <div class="checks short" id="clu-list"></div>
+    </div>
+
+    <div class="block">
+      <div class="label">Riqueza (nº de especies)</div>
+      <div class="row">
+        <input type="number" id="r-min" min="0" step="1">
+        <input type="number" id="r-max" min="0" step="1">
+      </div>
+      <div class="hint" id="r-hint"></div>
+    </div>
+
+    <button id="reset" style="width:100%">Restablecer filtros</button>
+
+    <div class="block" id="export-block" style="margin-top:16px">
+      <div class="label">Descargar</div>
+      <div class="row">
+        <select id="export-scale" title="Resolución de la imagen">
+          <option value="1">1x</option>
+          <option value="2" selected>2x</option>
+          <option value="3">3x</option>
+        </select>
+        <button id="export-png">Imagen PNG</button>
+      </div>
+      <div class="hint" id="export-hint">
+        Exporta lo que se ve ahora: encuadre actual, filtros aplicados y leyenda.
+      </div>
+    </div>
+  </aside>
+
+  <div id="map"></div>
+
+  <div id="charts">
+    <div class="filtros-activos" id="filtros-activos"></div>
+
+    <div class="chart">
+      <header>
+        <h2>Top 10 por riqueza de especies</h2>
+        <p class="sub" id="sub-riqueza"></p>
+        <div class="acciones">
+          <button class="link" data-chart="riqueza" data-fmt="svg">SVG</button>
+          <button class="link" data-chart="riqueza" data-fmt="png">PNG</button>
+        </div>
+      </header>
+      <div id="chart-riqueza"></div>
+    </div>
+
+    <div class="chart">
+      <header>
+        <h2>Top 10 por extensión</h2>
+        <p class="sub" id="sub-area"></p>
+        <div class="acciones">
+          <button class="link" data-chart="area" data-fmt="svg">SVG</button>
+          <button class="link" data-chart="area" data-fmt="png">PNG</button>
+        </div>
+      </header>
+      <div id="chart-area"></div>
+    </div>
+  </div>
+
+  <div id="tabla">
+    <div class="tabla-barra">
+      <label class="campo" for="t-min">Mínimo de celdas
+        <input type="number" id="t-min" min="1" step="1" value="2"></label>
+      <input type="search" id="t-buscar" placeholder="filtrar por especie o identificador…"
+             autocomplete="off">
+      <button id="t-csv">Descargar CSV</button>
+      <span class="cuenta" id="t-cuenta"></span>
+    </div>
+    <div class="tabla-caja">
+      <table class="comunidades">
+        <thead><tr id="t-cabecera"></tr></thead>
+        <tbody id="t-cuerpo"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="figuras">
+    <div class="aviso" id="figuras-aviso"></div>
+    <div id="figuras-lista"></div>
+  </div>
+
+  <div id="nodata">Ninguna comunidad cumple los filtros.</div>
+</div>
+
+/*__LEAFLET_JS__*/
+<script>
+const DATA = /*__DATA__*/;
+
+/* ---------- utilidades ---------- */
+const $ = (id) => document.getElementById(id);
+const fmt = (n) => n.toLocaleString("es");
+const italic = (name) => {
+  const p = name.split("_").filter(Boolean);
+  return p.length < 2 ? name.replace(/_/g, " ")
+                      : "<i>" + p[0] + " " + p[1] + "</i>" + (p.length > 2 ? " " + p.slice(2).join(" ") : "");
+};
+
+function hexToRgb(h){ return [1,3,5].map(i => parseInt(h.slice(i,i+2),16)); }
+function rampColor(ramp, t){
+  if (!isFinite(t)) return "#cccccc";
+  t = Math.max(0, Math.min(1, t));
+  const x = t * (ramp.length - 1), i = Math.floor(x), f = x - i;
+  if (i >= ramp.length - 1) return ramp[ramp.length - 1];
+  const a = hexToRgb(ramp[i]), b = hexToRgb(ramp[i+1]);
+  const c = a.map((v,k) => Math.round(v + (b[k]-v)*f));
+  return "rgb(" + c.join(",") + ")";
+}
+
+/* ---------- estado ---------- */
+const COMS = DATA.communities;
+const clusters = DATA.hasCluster
+  ? [...new Set(COMS.map(c => c.k).filter(v => v !== null && v !== undefined))].sort((a,b)=>a-b)
+  : [];
+
+/* `cluster.min_cells` deja fuera del clustering a las comunidades con poca
+   extensión: esas llegan con `k` nulo. Se les da una categoría propia y visible
+   por omisión; sin ella el filtro las descartaba en silencio y el mapa se abría
+   mostrando solo una fracción de los datos. */
+const SIN_CLUSTER = "sin";
+const claveCluster = (com) => (com.k === null || com.k === undefined) ? SIN_CLUSTER : com.k;
+const haySinCluster = DATA.hasCluster && COMS.some(c => claveCluster(c) === SIN_CLUSTER);
+const clavesCluster = haySinCluster ? [...clusters, SIN_CLUSTER] : clusters;
+const richnessValues = COMS.map(c => c.r);
+const R_MIN = Math.min(...richnessValues), R_MAX = Math.max(...richnessValues);
+const maxCells = Math.max(...COMS.map(c => c.n));
+const maxLoss = DATA.hasLoss ? Math.max(...COMS.map(c => c.loss || 0)) : 0;
+
+const state = {
+  species: new Set(),
+  speciesMode: "any",
+  regions: new Set(DATA.regions.map((_, i) => i)),
+  clusters: new Set(clavesCluster),
+  rMin: R_MIN,
+  rMax: R_MAX,
+  colorBy: "richness",
+};
+
+/* ---------- filtrado ---------- */
+function communityPasses(com){
+  if (com.r < state.rMin || com.r > state.rMax) return false;
+  if (clavesCluster.length && !state.clusters.has(claveCluster(com))) return false;
+  if (state.species.size){
+    if (state.speciesMode === "all"){
+      for (const s of state.species) if (!com.sp.includes(s)) return false;
+    } else {
+      let hit = false;
+      for (const s of state.species) if (com.sp.includes(s)) { hit = true; break; }
+      if (!hit) return false;
+    }
+  }
+  return true;
+}
+const featurePasses = (com, regionIdx) => communityPasses(com) && state.regions.has(regionIdx);
+
+/* ---------- color ---------- */
+function colorFor(com, regionIdx){
+  switch (state.colorBy){
+    case "cluster":
+      return com.k == null ? "#bbbbbb" : DATA.palette[(com.k - 1) % DATA.palette.length];
+    case "region":
+      return DATA.palette[regionIdx % DATA.palette.length];
+    case "loss":
+      return rampColor(DATA.ramps.loss, maxLoss ? (com.loss || 0) / maxLoss : 0);
+    case "cells":
+      return rampColor(DATA.ramps.cells, Math.log10(1 + com.n) / Math.log10(1 + maxCells));
+    default:
+      return rampColor(DATA.ramps.richness, R_MAX > R_MIN ? (com.r - R_MIN)/(R_MAX - R_MIN) : 0.5);
+  }
+}
+
+/* ---------- mapa ---------- */
+const map = L.map("map", { preferCanvas: true, zoomControl: true });
+
+/* Contorno de referencia embebido: da contexto geográfico cuando no hay
+   teselas (sin conexión, o con basemap "none"). Se dibuja debajo de todo. */
+if (DATA.context){
+  L.geoJSON(DATA.context, {
+    interactive: false,
+    style: { color: "#9aa4b0", weight: .8, fillColor: "#e9edf1", fillOpacity: 1 },
+  }).addTo(map);
+}
+
+/* La URL de teselas la aporta Python solo si hay mapa base: con basemap "none"
+   el archivo no contiene ninguna dirección externa. */
+if (DATA.tiles){
+  L.tileLayer(DATA.tiles.url, {
+    attribution: DATA.tiles.attribution,
+    maxZoom: DATA.tiles.maxZoom,
+    opacity: .85,
+  }).addTo(map);
+}
+
+const HIDDEN = { opacity: 0, fillOpacity: 0, interactive: false };
+const layers = [];
+
+function popupHtml(com, regionIdx, segCells){
+  const sp = com.sp.map(i => "<li>" + italic(DATA.species[i]) + "</li>").join("");
+  const rows = [
+    ["Riqueza", com.r + " especies"],
+    ["Extensión total", fmt(com.n) + " celdas"],
+    ["Región", DATA.regions[regionIdx]
+      + (segCells < com.n ? " (" + fmt(segCells) + " celdas aquí)" : "")],
+  ];
+  if (com.k != null) rows.push(["Cluster", com.k]);
+  if (com.loss != null) rows.push(["Pérdida de cobertura", com.loss.toFixed(2) + " %"]);
+  return '<div class="popup"><h3>Comunidad <code>' + com.id + "</code></h3><dl>"
+    + rows.map(r => "<dt>" + r[0] + "</dt><dd>" + r[1] + "</dd>").join("")
+    + "</dl><ul>" + sp + "</ul></div>";
+}
+
+L.geoJSON(DATA.features, {
+  style: { weight: .4, color: "#ffffff", fillOpacity: .85 },
+  onEachFeature: (feat, layer) => {
+    const com = COMS[feat.properties.c];
+    layer._com = com;
+    layer._reg = feat.properties.g;
+    layer._n = feat.properties.n;
+    layer.bindPopup(() => popupHtml(com, feat.properties.g, feat.properties.n), { maxWidth: 320 });
+    layers.push(layer);
+  },
+}).addTo(map);
+
+map.fitBounds(DATA.bounds);
+
+/* ---------- leyenda ---------- */
+const legend = L.control({ position: "bottomright" });
+legend.onAdd = function(){
+  this._div = L.DomUtil.create("div", "legend");
+  L.DomEvent.disableClickPropagation(this._div);
+  return this._div;
+};
+legend.addTo(map);
+
+function rampLegend(title, ramp, lo, hi){
+  return '<div class="title">' + title + '</div><div class="ramp">'
+    + ramp.map(c => '<span style="background:' + c + '"></span>').join("")
+    + '</div><div class="ends"><span>' + lo + "</span><span>" + hi + "</span></div>";
+}
+
+function renderLegend(){
+  let html;
+  if (state.colorBy === "cluster"){
+    html = '<div class="title">Cluster</div>' + clusters.map(k =>
+      '<div class="item"><i style="background:' + DATA.palette[(k-1) % DATA.palette.length] + '"></i>Grupo ' + k + "</div>"
+    ).join("")
+    + (haySinCluster
+        ? '<div class="item"><i style="background:#bbbbbb"></i>Sin grupo asignado</div>' : "");
+  } else if (state.colorBy === "region"){
+    html = '<div class="title">Región</div>' + DATA.regions.map((r, i) =>
+      '<div class="item"><i style="background:' + DATA.palette[i % DATA.palette.length] + '"></i>' + r + "</div>"
+    ).join("");
+  } else if (state.colorBy === "loss"){
+    html = rampLegend("Pérdida de cobertura", DATA.ramps.loss, "0 %", maxLoss.toFixed(1) + " %");
+  } else if (state.colorBy === "cells"){
+    html = rampLegend("Extensión (escala log)", DATA.ramps.cells, "1", fmt(maxCells) + " celdas");
+  } else {
+    html = rampLegend("Riqueza", DATA.ramps.richness, R_MIN + " sp", R_MAX + " sp");
+  }
+  legend.getContainer().innerHTML = html;
+}
+
+/* ---------- controles ---------- */
+function makeChecks(container, items, selected, onToggle){
+  container.innerHTML = "";
+  items.forEach(it => {
+    const label = document.createElement("label");
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = selected.has(it.value);
+    cb.addEventListener("change", () => onToggle(it.value, cb.checked));
+    label.appendChild(cb);
+    label.insertAdjacentHTML("beforeend", it.label
+      + (it.count != null ? '<span class="count">' + fmt(it.count) + "</span>" : ""));
+    container.appendChild(label);
+  });
+}
+
+const speciesCounts = DATA.species.map((_, i) =>
+  COMS.reduce((acc, c) => acc + (c.sp.includes(i) ? c.n : 0), 0));
+
+function renderSpecies(){
+  const q = $("sp-search").value.trim().toLowerCase();
+  const items = DATA.species
+    .map((name, i) => ({ value: i, label: italic(name), count: speciesCounts[i], raw: name.toLowerCase() }))
+    .filter(it => !q || it.raw.includes(q));
+  makeChecks($("sp-list"), items, state.species, (v, on) => {
+    on ? state.species.add(v) : state.species.delete(v);
+    apply();
+  });
+  $("sp-hint").textContent = state.species.size
+    ? state.species.size + " seleccionada(s) · modo " +
+      (state.speciesMode === "all" ? "contiene todas" : "contiene alguna")
+    : "sin filtro: se muestran todas";
+}
+
+function renderRegions(){
+  const items = DATA.regions.map((r, i) => ({ value: i, label: r }));
+  makeChecks($("reg-list"), items, state.regions, (v, on) => {
+    on ? state.regions.add(v) : state.regions.delete(v);
+    apply();
+  });
+}
+
+function renderClusters(){
+  if (!clavesCluster.length){ $("clu-block").style.display = "none"; return; }
+  const conteo = {};
+  COMS.forEach(c => { const k = claveCluster(c); conteo[k] = (conteo[k] || 0) + c.n; });
+  const items = clavesCluster.map(k => ({
+    value: k,
+    label: k === SIN_CLUSTER ? "Sin grupo asignado" : "Grupo " + k,
+    count: conteo[k] || 0,
+  }));
+  makeChecks($("clu-list"), items, state.clusters, (v, on) => {
+    on ? state.clusters.add(v) : state.clusters.delete(v);
+    apply();
+  });
+}
+
+const colorOptions = [
+  ["richness", "Riqueza de especies"],
+  ["cells", "Extensión (nº de celdas)"],
+];
+if (DATA.hasCluster) colorOptions.push(["cluster", "Cluster"]);
+if (DATA.regionColumn) colorOptions.push(["region", "Región"]);
+if (DATA.hasLoss) colorOptions.push(["loss", "Pérdida de cobertura"]);
+$("colorby").innerHTML = colorOptions
+  .map(o => '<option value="' + o[0] + '">' + o[1] + "</option>").join("");
+
+/* ---------- aplicar ----------
+   `visibles` guarda, por comunidad, las celdas que realmente se ven bajo los
+   filtros actuales: es lo que alimenta a la vez el contador, las graficas y la
+   imagen exportada, de modo que los tres cuentan siempre lo mismo. */
+let visibles = [];
+
+function apply(){
+  const porComunidad = new Map();
+  let cells = 0;
+  const speciesSeen = new Set();
+
+  layers.forEach(layer => {
+    const com = layer._com;
+    if (featurePasses(com, layer._reg)){
+      layer.setStyle({
+        opacity: 1, fillOpacity: .85, interactive: true,
+        weight: .4, color: "#ffffff", fillColor: colorFor(com, layer._reg),
+      });
+      cells += layer._n;              // celdas del segmento visible
+      const acc = porComunidad.get(com.id);
+      if (acc){
+        acc.cells += layer._n;
+      } else {
+        porComunidad.set(com.id, { com: com, cells: layer._n, reg: layer._reg });
+        com.sp.forEach(s => speciesSeen.add(s));
+      }
+    } else {
+      layer.setStyle(HIDDEN);
+    }
+  });
+
+  visibles = [...porComunidad.values()];
+
+  $("s-com").textContent = fmt(visibles.length);
+  $("s-cel").textContent = fmt(cells);
+  $("s-esp").textContent = fmt(speciesSeen.size);
+  $("nodata").style.display = visibles.length ? "none" : "block";
+  renderLegend();
+  if ($("charts").classList.contains("active")) renderCharts();
+  if ($("tabla").classList.contains("active")) renderTabla();
+}
+
+/* ---------- resumen de filtros ----------
+   Se reutiliza en la cabecera de las graficas y en el pie de la imagen
+   exportada: quien reciba el archivo debe poder saber que se estaba mirando. */
+function filterSummary(){
+  const partes = [];
+  if (state.species.size){
+    const nombres = [...state.species].map(i => DATA.species[i].replace(/_/g, " "));
+    partes.push(
+      (state.speciesMode === "all" ? "contiene todas: " : "contiene alguna de: ")
+      + nombres.join(", ")
+    );
+  }
+  if (state.regions.size < DATA.regions.length){
+    partes.push("regiones: " + [...state.regions].map(i => DATA.regions[i]).sort().join(", "));
+  }
+  if (clavesCluster.length && state.clusters.size < clavesCluster.length){
+    const nombres = [...state.clusters]
+      .map(k => k === SIN_CLUSTER ? "sin grupo" : String(k))
+      .sort();
+    partes.push("clusters: " + nombres.join(", "));
+  }
+  if (state.rMin > R_MIN || state.rMax < R_MAX){
+    partes.push("riqueza " + state.rMin + "-" + state.rMax + " especies");
+  }
+  return partes.length ? partes.join(" · ") : "sin filtros: todas las comunidades";
+}
+
+/* ---------- graficas ---------- */
+const CHART_W = 760, BAR_H = 26, PAD_L = 250, PAD_R = 60, PAD_T = 8, PAD_B = 24;
+
+function shortComposition(com, max){
+  return abreviar(com.sp, max || 3);
+}
+
+function escapeXml(t){
+  return String(t).replace(/[&<>"']/g, ch =>
+    ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&apos;" }[ch]));
+}
+
+function barChartSvg(items, valueOf, labelOf, unidad, colorOf){
+  if (!items.length) return null;
+  const h = PAD_T + items.length * BAR_H + PAD_B;
+  const max = Math.max(...items.map(valueOf)) || 1;
+  const ancho = CHART_W - PAD_L - PAD_R;
+
+  const barras = items.map((it, i) => {
+    const v = valueOf(it);
+    const w = Math.max(2, (v / max) * ancho);
+    const y = PAD_T + i * BAR_H;
+    return ''
+      + '<text class="bar-label" x="' + (PAD_L - 8) + '" y="' + (y + BAR_H/2 + 4)
+      + '" text-anchor="end">' + escapeXml(labelOf(it, i)) + '</text>'
+      + '<rect x="' + PAD_L + '" y="' + (y + 4) + '" width="' + w + '" height="' + (BAR_H - 9)
+      + '" rx="2" fill="' + colorOf(it) + '"><title>' + escapeXml(it.com.id + ' — '
+      + shortComposition(it.com, 20)) + '</title></rect>'
+      + '<text class="bar-value" x="' + (PAD_L + w + 6) + '" y="' + (y + BAR_H/2 + 4) + '">'
+      + fmt(v) + '</text>';
+  }).join("");
+
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + CHART_W + ' ' + h
+    + '" width="' + CHART_W + '" height="' + h + '" font-family="system-ui, sans-serif">'
+    + '<style>.bar-label{font-size:11px;fill:#1c2024}.bar-value{font-size:11px;fill:#666e79}</style>'
+    + '<rect width="100%" height="100%" fill="#ffffff"/>'
+    + '<line x1="' + PAD_L + '" y1="' + PAD_T + '" x2="' + PAD_L
+    + '" y2="' + (h - PAD_B) + '" stroke="#dfe3e8"/>'
+    + barras
+    + '<text class="bar-value" x="' + PAD_L + '" y="' + (h - 6) + '">' + escapeXml(unidad)
+    + '</text></svg>';
+}
+
+/* Las comunidades mas ricas comparten casi siempre el mismo nucleo de especies
+   generalistas, asi que repetirlo en cada barra no distingue nada. Se extrae el
+   nucleo comun al conjunto mostrado y cada barra se rotula con lo que la
+   diferencia; el nucleo se enuncia una sola vez sobre la grafica. */
+function etiquetasComparativas(items){
+  if (!items.length) return { nucleo: "", etiquetas: [] };
+
+  let nucleo = items[0].com.sp.slice();
+  for (const it of items) nucleo = nucleo.filter(sp => it.com.sp.includes(sp));
+
+  const utilizable = items.length > 1 && nucleo.length >= 2
+    && items.some(it => it.com.sp.length > nucleo.length);
+
+  if (!utilizable){
+    return {
+      nucleo: "",
+      etiquetas: items.map(it => shortComposition(it.com, 3)),
+    };
+  }
+
+  return {
+    nucleo: abreviar(nucleo, 3),
+    etiquetas: items.map((it, i) => {
+      const propias = it.com.sp.filter(sp => !nucleo.includes(sp));
+      return (i + 1) + ". " + (propias.length
+        ? "+ " + abreviar(propias, 3)
+        : "solo el nucleo comun");
+    }),
+  };
+}
+
+function abreviar(indices, max){
+  const nombres = indices.slice(0, max).map(i => {
+    const partes = DATA.species[i].split("_").filter(Boolean);
+    return partes.length < 2 ? partes[0] : partes[0][0].toUpperCase() + ". " + partes[1];
+  });
+  const resto = indices.length - max;
+  return nombres.join(", ") + (resto > 0 ? " +" + resto : "");
+}
+
+function renderCharts(){
+  $("filtros-activos").textContent = "Filtros aplicados — " + filterSummary()
+    + " · " + fmt(visibles.length) + " comunidades";
+
+  const vacio = '<p class="vacio">Ninguna comunidad cumple los filtros.</p>';
+
+  // Top 10 por riqueza; a igual riqueza manda la extension visible.
+  const porRiqueza = [...visibles]
+    .sort((a, b) => b.com.r - a.com.r || b.cells - a.cells)
+    .slice(0, 10);
+  const etqR = etiquetasComparativas(porRiqueza);
+  $("chart-riqueza").innerHTML =
+    barChartSvg(porRiqueza, it => it.com.r,
+      (it, i) => etqR.etiquetas[i],
+      "numero de especies",
+      it => rampColor(DATA.ramps.richness,
+        R_MAX > R_MIN ? (it.com.r - R_MIN) / (R_MAX - R_MIN) : .5)) || vacio;
+  $("sub-riqueza").textContent = !porRiqueza.length ? ""
+    : etqR.nucleo
+      ? "Nucleo comun a las 10: " + etqR.nucleo + " · cada barra muestra lo que anade"
+      : "de " + fmt(visibles.length) + " comunidades visibles";
+
+  // Top 10 por extension visible.
+  const porArea = [...visibles]
+    .sort((a, b) => b.cells - a.cells || b.com.r - a.com.r)
+    .slice(0, 10);
+  const etqA = etiquetasComparativas(porArea);
+  const maxCeldas = porArea.length ? porArea[0].cells : 1;
+  $("chart-area").innerHTML =
+    barChartSvg(porArea, it => it.cells,
+      (it, i) => etqA.etiquetas[i],
+      "celdas visibles (dentro de los filtros)",
+      it => rampColor(DATA.ramps.cells,
+        Math.log10(1 + it.cells) / Math.log10(1 + maxCeldas))) || vacio;
+  $("sub-area").textContent = !porArea.length ? ""
+    : etqA.nucleo
+      ? "Nucleo comun a las 10: " + etqA.nucleo + " · cada barra muestra lo que anade"
+      : "celdas dentro de los filtros, no extension total";
+}
+
+/* ---------- descargas ---------- */
+function baseName(){
+  return (document.title || "mapa").toLowerCase()
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "mapa";
+}
+
+function descargar(blob, nombre){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = nombre;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+function svgToPng(svg, escala, nombre){
+  // data URI y no blob:. Al abrir el archivo con doble clic el documento vive
+  // en un origen opaco (file://), y una imagen cargada desde blob: puede
+  // contaminar el canvas y hacer fallar toBlob con SecurityError. Un data URI
+  // se considera del mismo origen y nunca contamina.
+  const url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+  const img = new Image();
+  img.onload = () => {
+    const c = document.createElement("canvas");
+    c.width = img.width * escala; c.height = img.height * escala;
+    const ctx = c.getContext("2d");
+    ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, c.width, c.height);
+    ctx.drawImage(img, 0, 0, c.width, c.height);
+    try {
+      c.toBlob(b => descargar(b, nombre), "image/png");
+    } catch (err) {
+      alert("No se pudo generar el PNG (" + err.name + "). "
+            + "Descargue el SVG, que no depende del canvas.");
+    }
+  };
+  img.onerror = () => alert("No se pudo generar el PNG a partir del SVG.");
+  img.src = url;
+}
+
+/* Dibuja las geometrias sobre un canvas usando la proyeccion actual del mapa,
+   de modo que la imagen reproduce exactamente el encuadre en pantalla. */
+function trazarGeom(ctx, geom, escala, offY){
+  const poligonos = geom.type === "Polygon" ? [geom.coordinates] : geom.coordinates;
+  ctx.beginPath();
+  poligonos.forEach(poly => poly.forEach(anillo => {
+    anillo.forEach((pt, i) => {
+      const p = map.latLngToContainerPoint([pt[1], pt[0]]);
+      const x = p.x * escala, y = p.y * escala + offY;
+      if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+    });
+    ctx.closePath();
+  }));
+}
+
+function exportMapPNG(){
+  const escala = +$("export-scale").value || 2;
+  const size = map.getSize();
+  const cabecera = 76 * escala;
+  const pie = 30 * escala;
+
+  const c = document.createElement("canvas");
+  c.width = size.x * escala;
+  c.height = size.y * escala + cabecera + pie;
+  const ctx = c.getContext("2d");
+
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, c.width, c.height);
+
+  // Contorno de referencia, debajo de todo.
+  if (DATA.context){
+    ctx.fillStyle = "#eef1f4";
+    ctx.strokeStyle = "#9aa4b0";
+    ctx.lineWidth = Math.max(1, .8 * escala);
+    DATA.context.features.forEach(f => {
+      trazarGeom(ctx, f.geometry, escala, cabecera);
+      ctx.fill("evenodd"); ctx.stroke();
+    });
+  }
+
+  // Comunidades visibles, con el color activo.
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = Math.max(.5, .4 * escala);
+  DATA.features.features.forEach(f => {
+    const com = COMS[f.properties.c];
+    if (!featurePasses(com, f.properties.g)) return;
+    ctx.fillStyle = colorFor(com, f.properties.g);
+    trazarGeom(ctx, f.geometry, escala, cabecera);
+    ctx.fill("evenodd"); ctx.stroke();
+  });
+
+  // Cabecera: titulo y filtros activos.
+  ctx.fillStyle = "#1c2024";
+  ctx.textBaseline = "alphabetic";
+  ctx.font = "600 " + (16 * escala) + "px system-ui, sans-serif";
+  ctx.fillText(document.title, 14 * escala, 26 * escala);
+
+  ctx.fillStyle = "#666e79";
+  ctx.font = (11 * escala) + "px system-ui, sans-serif";
+  const resumen = "Filtros — " + filterSummary();
+  const maxCar = Math.floor(c.width / (6.2 * escala));
+  ctx.fillText(resumen.length > maxCar ? resumen.slice(0, maxCar - 1) + "…" : resumen,
+               14 * escala, 46 * escala);
+  ctx.fillText($("s-com").textContent + " comunidades · " + $("s-cel").textContent
+               + " celdas · " + $("s-esp").textContent + " especies",
+               14 * escala, 64 * escala);
+
+  dibujarLeyenda(ctx, escala, cabecera, size);
+
+  // Pie: nota de teselas y atribucion.
+  ctx.fillStyle = "#98a1ac";
+  ctx.font = (10 * escala) + "px system-ui, sans-serif";
+  ctx.fillText(
+    (DATA.tiles ? "Mapa base omitido en la exportacion. " : "")
+    + "Generado con spatialcom · Leaflet",
+    14 * escala, c.height - 11 * escala);
+
+  c.toBlob(b => descargar(b, baseName() + "_mapa.png"), "image/png");
+}
+
+function dibujarLeyenda(ctx, escala, offY, size){
+  const x = 14 * escala;
+  let y = offY + size.y * escala - 16 * escala;
+  ctx.font = (11 * escala) + "px system-ui, sans-serif";
+  ctx.textBaseline = "middle";
+
+  const categorico = state.colorBy === "cluster" || state.colorBy === "region";
+  if (categorico){
+    const items = state.colorBy === "cluster"
+      ? clavesCluster.filter(k => state.clusters.has(k)).map(k => ({
+          c: k === SIN_CLUSTER ? "#bbbbbb" : DATA.palette[(k-1) % DATA.palette.length],
+          t: k === SIN_CLUSTER ? "Sin grupo" : "Grupo " + k,
+        }))
+      : [...state.regions].sort().map(i =>
+          ({ c: DATA.palette[i % DATA.palette.length], t: DATA.regions[i] }));
+    items.slice().reverse().forEach(it => {
+      ctx.fillStyle = it.c;
+      ctx.fillRect(x, y - 5 * escala, 11 * escala, 11 * escala);
+      ctx.fillStyle = "#1c2024";
+      ctx.fillText(it.t, x + 16 * escala, y);
+      y -= 16 * escala;
+    });
+  } else {
+    const cfg = {
+      loss:   [DATA.ramps.loss, "0 %", maxLoss.toFixed(1) + " %", "Perdida de cobertura"],
+      cells:  [DATA.ramps.cells, "1", fmt(maxCells), "Extension (log)"],
+    }[state.colorBy] || [DATA.ramps.richness, R_MIN + " sp", R_MAX + " sp", "Riqueza"];
+
+    const w = 130 * escala, h = 10 * escala;
+    cfg[0].forEach((color, i) => {
+      ctx.fillStyle = color;
+      ctx.fillRect(x + (i * w) / cfg[0].length, y - h/2, w / cfg[0].length + 1, h);
+    });
+    ctx.fillStyle = "#1c2024";
+    ctx.fillText(cfg[1], x, y + 14 * escala);
+    ctx.textAlign = "right";
+    ctx.fillText(cfg[2], x + w, y + 14 * escala);
+    ctx.textAlign = "left";
+    ctx.font = "600 " + (11 * escala) + "px system-ui, sans-serif";
+    ctx.fillText(cfg[3], x, y - 14 * escala);
+  }
+  ctx.textBaseline = "alphabetic";
+}
+
+/* ---------- tabla de comunidades ----------
+   Comparte los filtros del panel con el mapa y las graficas, y anade un minimo
+   de celdas propio: por omision 2, que descarta las comunidades de una sola
+   celda. Con muchas especies esas son la inmensa mayoria y no describen un
+   ensamblaje repetido, sino una celda concreta. */
+const COLUMNAS = [
+  { clave: "orden",   titulo: "#",           num: true,  valor: (f, i) => i + 1 },
+  { clave: "riqueza", titulo: "Riqueza",     num: true,  valor: f => f.com.r },
+  { clave: "celdas",  titulo: "Celdas",      num: true,  valor: f => f.cells },
+  { clave: "total",   titulo: "Ext. total",  num: true,  valor: f => f.com.n },
+  { clave: "cluster", titulo: "Cluster",     num: true,
+    valor: f => (f.com.k === null || f.com.k === undefined) ? null : f.com.k },
+  { clave: "perdida", titulo: "Pérdida %",   num: true,
+    valor: f => (f.com.loss === null || f.com.loss === undefined) ? null : f.com.loss },
+  { clave: "region",  titulo: "Región",      num: false,
+    valor: f => (f.com.reg || []).map(i => DATA.regions[i]).join(", ") },
+  { clave: "especies", titulo: "Composición", num: false,
+    valor: f => f.com.sp.map(i => DATA.species[i]).join(", ") },
+  { clave: "id",      titulo: "Identificador", num: false, valor: f => f.com.id },
+];
+
+const tablaEstado = { orden: "celdas", asc: false, minCeldas: 2, busqueda: "", expandidas: new Set() };
+let tablaFilas = [];
+
+function filasDeLaTabla(){
+  const q = tablaEstado.busqueda.trim().toLowerCase();
+  let filas = visibles.filter(f => f.cells >= tablaEstado.minCeldas);
+
+  if (q){
+    filas = filas.filter(f =>
+      f.com.id.toLowerCase().includes(q)
+      || f.com.sp.some(i => DATA.species[i].toLowerCase().includes(q)));
+  }
+
+  const col = COLUMNAS.find(c => c.clave === tablaEstado.orden) || COLUMNAS[2];
+  const signo = tablaEstado.asc ? 1 : -1;
+  filas = filas.slice().sort((a, b) => {
+    const va = col.valor(a, 0), vb = col.valor(b, 0);
+    if (va === null) return 1;
+    if (vb === null) return -1;
+    if (col.num) return signo * (va - vb);
+    return signo * String(va).localeCompare(String(vb), "es");
+  });
+  return filas;
+}
+
+function renderTabla(){
+  tablaFilas = filasDeLaTabla();
+
+  $("t-cabecera").innerHTML = COLUMNAS.map(c =>
+    '<th data-col="' + c.clave + '"' + (c.num ? ' class="num"' : "") + ">" + c.titulo
+    + (tablaEstado.orden === c.clave
+        ? '<span class="orden">' + (tablaEstado.asc ? "▲" : "▼") + "</span>" : "")
+    + "</th>").join("");
+
+  const totalConCeldas = visibles.filter(f => f.cells >= tablaEstado.minCeldas).length;
+  $("t-cuenta").textContent =
+    fmt(tablaFilas.length) + " de " + fmt(visibles.length) + " comunidades visibles"
+    + (tablaEstado.minCeldas > 1
+        ? "  ·  " + fmt(visibles.length - totalConCeldas) + " ocultas por tener menos de "
+          + tablaEstado.minCeldas + " celdas" : "");
+
+  if (!tablaFilas.length){
+    $("t-cuerpo").innerHTML =
+      '<tr><td colspan="' + COLUMNAS.length + '" style="text-align:center;padding:24px">'
+      + "Ninguna comunidad cumple los filtros.</td></tr>";
+    return;
+  }
+
+  $("t-cuerpo").innerHTML = tablaFilas.map((f, i) => {
+    const abierta = tablaEstado.expandidas.has(f.com.id);
+    const nombres = f.com.sp.map(j => italic(DATA.species[j]));
+    const recorte = abierta ? nombres : nombres.slice(0, 4);
+    const resto = nombres.length - recorte.length;
+    const composicion = recorte.join(", ")
+      + (resto > 0
+          ? ' <button data-id="' + f.com.id + '">+' + resto + " más</button>"
+          : (abierta && nombres.length > 4
+              ? ' <button data-id="' + f.com.id + '">ocultar</button>' : ""));
+
+    return "<tr>"
+      + '<td class="num">' + (i + 1) + "</td>"
+      + '<td class="num">' + f.com.r + "</td>"
+      + '<td class="num">' + fmt(f.cells) + "</td>"
+      + '<td class="num">' + fmt(f.com.n) + "</td>"
+      + '<td class="num">' + (f.com.k == null
+          ? '<span class="chip">sin grupo</span>' : f.com.k) + "</td>"
+      + '<td class="num">' + (f.com.loss == null ? "—" : f.com.loss.toFixed(2)) + "</td>"
+      + "<td>" + (f.com.reg || []).map(j => DATA.regions[j]).join(", ") + "</td>"
+      + '<td class="sp">' + composicion + "</td>"
+      + '<td class="id">' + f.com.id + "</td>"
+      + "</tr>";
+  }).join("");
+}
+
+function tablaCsv(){
+  const cabecera = COLUMNAS.map(c => c.titulo);
+  const escapar = (v) => {
+    const t = v === null || v === undefined ? "" : String(v);
+    return /[",\n;]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
+  };
+  const lineas = [cabecera.join(",")];
+  tablaFilas.forEach((f, i) => {
+    lineas.push(COLUMNAS.map(c => escapar(c.valor(f, i))).join(","));
+  });
+  return lineas.join("\n");
+}
+
+/* ---------- figuras estaticas ----------
+   Se incrustan como data URI dentro de un <img>: cada figura conserva asi su
+   propio espacio de identificadores y su propio CSS. Matplotlib genera ids de
+   glifo y de recorte que colisionarian al fusionar varios SVG en un mismo
+   documento. */
+let figurasRenderizadas = false;
+
+function renderFiguras(){
+  if (figurasRenderizadas) return;
+  const figuras = DATA.figures || [];
+
+  $("figuras-aviso").textContent = figuras.length
+    ? "Estas figuras corresponden al analisis completo y NO reaccionan a los "
+      + "filtros del panel. Para una imagen con los filtros aplicados use la "
+      + "pestana Mapa y el boton Imagen PNG."
+    : "Esta corrida no genero figuras estaticas.";
+
+  $("figuras-lista").innerHTML = figuras.map(f => {
+    const src = "data:" + f.mime + ";base64," + f.data;
+    return '<figure class="figura">'
+      + "<h2>" + f.title + "</h2>"
+      + (f.caption ? '<p class="pie">' + f.caption + "</p>" : "")
+      + '<div class="lienzo"><img src="' + src + '" alt="' + f.title + '" loading="lazy"></div>'
+      + '<div class="acciones"><a class="link" download="' + f.filename
+      + '" href="' + src + '">Descargar ' + f.filename.split(".").pop().toUpperCase()
+      + "</a></div></figure>";
+  }).join("");
+
+  figurasRenderizadas = true;
+}
+
+/* ---------- pestanas ---------- */
+function activarPestana(nombre){
+  const esMapa = nombre === "mapa";
+  const esGraficas = nombre === "graficas";
+  const esTabla = nombre === "tabla";
+  const esFiguras = nombre === "figuras";
+
+  $("tab-mapa").setAttribute("aria-selected", esMapa);
+  $("tab-graficas").setAttribute("aria-selected", esGraficas);
+  $("tab-tabla").setAttribute("aria-selected", esTabla);
+  $("tab-figuras").setAttribute("aria-selected", esFiguras);
+
+  $("map").classList.toggle("hidden", !esMapa);
+  $("charts").classList.toggle("active", esGraficas);
+  $("tabla").classList.toggle("active", esTabla);
+  $("figuras").classList.toggle("active", esFiguras);
+
+  // Las figuras son estaticas: los filtros no las afectan y el panel se atenua.
+  $("panel").classList.toggle("inerte", esFiguras);
+  $("export-block").style.display = esMapa ? "" : "none";
+  $("nodata").style.display = (esMapa && !visibles.length) ? "block" : "none";
+
+  if (esMapa) map.invalidateSize();
+  else if (esGraficas) renderCharts();
+  else if (esTabla) renderTabla();
+  else renderFiguras();
+}
+
+/* ---------- eventos ---------- */
+$("tab-mapa").addEventListener("click", () => activarPestana("mapa"));
+$("tab-graficas").addEventListener("click", () => activarPestana("graficas"));
+$("tab-tabla").addEventListener("click", () => activarPestana("tabla"));
+$("tab-figuras").addEventListener("click", () => activarPestana("figuras"));
+
+$("t-min").addEventListener("change", e => {
+  tablaEstado.minCeldas = Math.max(1, +e.target.value || 1);
+  renderTabla();
+});
+$("t-buscar").addEventListener("input", e => {
+  tablaEstado.busqueda = e.target.value; renderTabla();
+});
+$("t-cabecera").addEventListener("click", e => {
+  const th = e.target.closest("th");
+  if (!th) return;
+  const col = th.dataset.col;
+  if (tablaEstado.orden === col) tablaEstado.asc = !tablaEstado.asc;
+  else { tablaEstado.orden = col; tablaEstado.asc = false; }
+  renderTabla();
+});
+$("t-cuerpo").addEventListener("click", e => {
+  const btn = e.target.closest("button[data-id]");
+  if (!btn) return;
+  const id = btn.dataset.id;
+  tablaEstado.expandidas.has(id)
+    ? tablaEstado.expandidas.delete(id)
+    : tablaEstado.expandidas.add(id);
+  renderTabla();
+});
+$("t-csv").addEventListener("click", () => {
+  // BOM inicial: sin el, Excel interpreta el CSV como ANSI y rompe los acentos.
+  const blob = new Blob(["﻿" + tablaCsv()], { type: "text/csv;charset=utf-8" });
+  descargar(blob, baseName() + "_tabla.csv");
+});
+$("export-png").addEventListener("click", exportMapPNG);
+
+document.querySelectorAll(".acciones button").forEach(btn =>
+  btn.addEventListener("click", () => {
+    const svg = $("chart-" + btn.dataset.chart).innerHTML;
+    if (!svg.startsWith("<svg")) return;
+    const nombre = baseName() + "_top10_" + btn.dataset.chart;
+    if (btn.dataset.fmt === "svg"){
+      descargar(new Blob([svg], { type: "image/svg+xml;charset=utf-8" }), nombre + ".svg");
+    } else {
+      svgToPng(svg, 2, nombre + ".png");
+    }
+  }));
+
+$("colorby").addEventListener("change", e => { state.colorBy = e.target.value; apply(); });
+$("sp-search").addEventListener("input", renderSpecies);
+$("sp-clear").addEventListener("click", () => { state.species.clear(); renderSpecies(); apply(); });
+document.querySelectorAll('input[name=spmode]').forEach(r =>
+  r.addEventListener("change", e => { state.speciesMode = e.target.value; renderSpecies(); apply(); }));
+$("reg-all").addEventListener("click", () => {
+  DATA.regions.forEach((_, i) => state.regions.add(i)); renderRegions(); apply();
+});
+$("clu-all").addEventListener("click", () => {
+  clavesCluster.forEach(k => state.clusters.add(k)); renderClusters(); apply();
+});
+$("r-min").addEventListener("change", e => { state.rMin = +e.target.value; apply(); });
+$("r-max").addEventListener("change", e => { state.rMax = +e.target.value; apply(); });
+$("reset").addEventListener("click", () => {
+  state.species.clear();
+  state.speciesMode = "any";
+  document.querySelector('input[name=spmode][value=any]').checked = true;
+  DATA.regions.forEach((_, i) => state.regions.add(i));
+  clavesCluster.forEach(k => state.clusters.add(k));
+  state.rMin = R_MIN; state.rMax = R_MAX;
+  $("r-min").value = R_MIN; $("r-max").value = R_MAX;
+  $("sp-search").value = "";
+  renderSpecies(); renderRegions(); renderClusters(); apply();
+  map.fitBounds(DATA.bounds);
+});
+
+/* ---------- arranque ---------- */
+if (!DATA.regionColumn) $("reg-block").style.display = "none";
+if (!DATA.figures || !DATA.figures.length) $("tab-figuras").style.display = "none";
+$("r-hint").textContent =
+  "rango observado en los datos: " + R_MIN + "-" + R_MAX + " especies";
+$("r-min").value = R_MIN; $("r-min").min = R_MIN; $("r-min").max = R_MAX;
+$("r-max").value = R_MAX; $("r-max").min = R_MIN; $("r-max").max = R_MAX;
+renderSpecies(); renderRegions(); renderClusters(); apply();
+</script>
+</body>
+</html>

@@ -1,0 +1,113 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "spatialcom"
+version = "0.1.0"
+description = "Delineation, classification and characterization of spatial species assemblages from binary SDM rasters."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Maximiliano Ortiz Varela", email = "max.sw2308@gmail.com" }]
+maintainers = [{ name = "Maximiliano Ortiz Varela", email = "max.sw2308@gmail.com" }]
+keywords = [
+    "biogeography",
+    "species-assemblages",
+    "community-ecology",
+    "SDM",
+    "species-distribution-models",
+    "geospatial",
+    "raster",
+    "clustering",
+    "primates",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: Spanish",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: GIS",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Typing :: Typed",
+]
+
+dependencies = [
+    "geopandas>=0.14",
+    "rasterio>=1.3",
+    "shapely>=2.0",
+    "pandas>=2.0",
+    "numpy>=1.24",
+    "scipy>=1.11",
+    "scikit-learn>=1.3",
+    "rasterstats>=0.19",
+    "pyyaml>=6.0",
+    "typer>=0.12",
+    "rich>=13.0",
+]
+
+[project.optional-dependencies]
+viz = ["matplotlib>=3.8", "seaborn>=0.13", "networkx>=3.2", "adjustText>=1.0"]
+dev = ["pytest>=8.0", "pytest-cov", "ruff>=0.5", "mypy>=1.10", "pre-commit", "build>=1.2", "twine>=5.0"]
+all = ["spatialcom[viz,dev]"]
+
+[project.urls]
+Homepage = "https://github.com/Maxornatus/spatialcom"
+Repository = "https://github.com/Maxornatus/spatialcom"
+Documentation = "https://github.com/Maxornatus/spatialcom#readme"
+Issues = "https://github.com/Maxornatus/spatialcom/issues"
+Changelog = "https://github.com/Maxornatus/spatialcom/blob/main/CHANGELOG.md"
+
+[project.scripts]
+spatialcom = "spatialcom.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/spatialcom"]
+# La plantilla HTML y la copia de Leaflet son datos del paquete, no código:
+# sin esto el mapa web no se podría generar desde una instalación por wheel.
+artifacts = [
+    "src/spatialcom/viz/webmap_template.html",
+    "src/spatialcom/viz/assets/**",
+    "src/spatialcom/assets/**",
+]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+    "/configs",
+    "/docs",
+    "/notebooks",
+    "/README.md",
+    "/LICENSE",
+    "/CHANGELOG.md",
+    "/CONTRIBUTING.md",
+    "/CITATION.cff",
+    "/pyproject.toml",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "NPY", "PD"]
+
+[tool.ruff.lint.flake8-bugbear]
+# typer declara los parámetros de la CLI como valores por omisión: es su API,
+# no el defecto mutable que B008 persigue.
+extend-immutable-calls = ["typer.Argument", "typer.Option"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true

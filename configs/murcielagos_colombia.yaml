@@ -1,0 +1,73 @@
+# Comunidades de murciélagos de Colombia — 196 especies.
+# Misma cuadrícula y mismas capas de contexto que el análisis de primates.
+run_id: murcielagos_v1
+
+grid:
+  path: ../../cuadricula_cortada.shp
+  id_column: cell_id
+  crs: null
+
+species:
+  raster_dir: ../../murcielagos/Binarios
+  pattern: "*.tif"
+  name_strip_suffixes: ["_binario", "_bin"]
+  presence_rule: min_pixels
+  min_pixels: 1
+  min_fraction: 0.0
+  all_touched: false
+  thresholds: 0.5
+  # Los 196 rásters no declaran CRS. Su resolución (0.008333) y su extensión
+  # (-81,7 a -66,9 lon; -4,2 a 12,6 lat) corresponden inequívocamente a
+  # coordenadas geográficas sobre Colombia, igual que los de primates.
+  # Es una suposición declarada, no un dato del archivo.
+  assume_crs: EPSG:4326
+
+mask:
+  path: ../../uso_del_suelo_col/ciudades.shp
+  predicate: intersects
+  label: urbano
+
+deforestation:
+  raster: ../../capa_deforestacion/deforestacion_colombia.vrt
+  band: 1
+  year_offset: 2000
+  value_range: [1, 24]
+  all_touched: true
+  level_bins: [0.0, 10.0, 25.0, 45.0, 75.0]
+
+cluster:
+  metric: jaccard
+  linkage: average
+  selection: silhouette
+  n_clusters: null
+  k_range: [2, 12]
+  # Con 196 especies el 87 % de las composiciones aparece en una sola celda.
+  # min_cells: 2 conserva 882 comunidades que cubren el 31,5 % del área;
+  # min_cells: 5 conservaría 123 que cubren solo el 11,3 %. Ninguna opción es
+  # satisfactoria: es el síntoma de que la composición exacta no discrimina a
+  # esta riqueza. Ver docs/MURCIELAGOS.md.
+  min_cells: 2
+  random_state: 42
+
+regions:
+  path: ../../Regiones_Naturales/regiones.shp
+  name_column: null
+
+webmap:
+  enabled: true
+  filename: 07_mapa_comunidades
+  title: Comunidades de murciélagos de Colombia
+  subtitle: ""
+  simplify_tolerance: 0.002
+  coord_precision: 4
+  basemap: none
+  leaflet: bundled
+  context_path: null
+  embed_figures: true
+
+output:
+  dir: ../../resultados
+  vector_format: gpkg
+  figure_format: svg
+  dpi: 300
+  overwrite: true

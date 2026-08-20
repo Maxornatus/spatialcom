@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+title: "spatialcom: spatial species assemblage delineation and classification"
+message: "Si usa este software, cítelo como se indica."
+type: software
+authors:
+  - family-names: "Ortiz Varela"
+    given-names: "Maximiliano"
+    email: "max.sw2308@gmail.com"
+    orcid: ""
+abstract: >-
+  Librería de Python para delinear, clasificar y caracterizar comunidades espaciales
+  de especies a partir de modelos de distribución (SDM) binarios sobre una cuadrícula
+  regular: composición por celda, clasificación jerárquica de comunidades, ordenación,
+  cruce con perturbación del paisaje y regiones biogeográficas, figuras y mapa web.
+keywords:
+  - biogeography
+  - species assemblages
+  - community ecology
+  - species distribution models
+  - geospatial
+  - Python
+version: 0.1.0
+date-released: "2026-08-20"
+license: MIT
+repository-code: "https://github.com/Maxornatus/spatialcom"
+url: "https://github.com/Maxornatus/spatialcom"
